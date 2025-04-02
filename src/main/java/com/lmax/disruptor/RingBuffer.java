@@ -17,8 +17,6 @@ package com.lmax.disruptor;
 
 
 import com.lmax.disruptor.dsl.ProducerType;
-import com.lmax.disruptor.util.Util;
-import sun.misc.Unsafe;
 
 abstract class RingBufferPad
 {
@@ -34,43 +32,14 @@ abstract class RingBufferPad
 
 abstract class RingBufferFields<E> extends RingBufferPad
 {
-    private static final int BUFFER_PAD;
-    private static final long REF_ARRAY_BASE;
-    private static final int REF_ELEMENT_SHIFT;
-    private static final Unsafe UNSAFE = Util.getUnsafe();
-
-    private static final int POINTER_SIZE_32_BIT = 4;
-    private static final int BITSHIFT_MULTIPLIER_FOUR = 2;
-    public static final int POINTER_SIZE_64_BIT = 8;
-    private static final int BITSHIFT_MULTIPLIER_EIGHT = 3;
-
-    private static final int BUFFER_PADDING_BYTES = 128;
-
-    static
-    {
-        final int scale = UNSAFE.arrayIndexScale(Object[].class);
-        if (POINTER_SIZE_32_BIT == scale)
-        {
-            REF_ELEMENT_SHIFT = BITSHIFT_MULTIPLIER_FOUR;
-        }
-        else if (POINTER_SIZE_64_BIT == scale)
-        {
-            REF_ELEMENT_SHIFT = BITSHIFT_MULTIPLIER_EIGHT;
-        }
-        else
-        {
-            throw new IllegalStateException("Unknown pointer size");
-        }
-        BUFFER_PAD = BUFFER_PADDING_BYTES / scale;
-        // Including the buffer pad in the array base offset
-        REF_ARRAY_BASE = UNSAFE.arrayBaseOffset(Object[].class) + BUFFER_PADDING_BYTES;
-    }
+    private static final int BUFFER_PAD = 32;
 
     private final long indexMask;
-    private final Object[] entries;
+    private final E[] entries;
     protected final int bufferSize;
     protected final Sequencer sequencer;
 
+    @SuppressWarnings("unchecked")
     RingBufferFields(
         final EventFactory<E> eventFactory,
         final Sequencer sequencer)
@@ -88,7 +57,7 @@ abstract class RingBufferFields<E> extends RingBufferPad
         }
 
         this.indexMask = bufferSize - 1;
-        this.entries = new Object[sequencer.getBufferSize() + 2 * BUFFER_PAD];
+        this.entries = (E[]) new Object[bufferSize + 2 * BUFFER_PAD];
         fill(eventFactory);
     }
 
@@ -100,10 +69,9 @@ abstract class RingBufferFields<E> extends RingBufferPad
         }
     }
 
-    @SuppressWarnings("unchecked")
     protected final E elementAt(final long sequence)
     {
-        return (E) UNSAFE.getObject(entries, REF_ARRAY_BASE + ((sequence & indexMask) << REF_ELEMENT_SHIFT));
+        return entries[BUFFER_PAD + (int) (sequence & indexMask)];
     }
 }
 
@@ -115,6 +83,9 @@ abstract class RingBufferFields<E> extends RingBufferPad
  */
 public final class RingBuffer<E> extends RingBufferFields<E> implements Cursored, EventSequencer<E>, EventSink<E>
 {
+    /**
+     * The initial cursor value
+     */
     public static final long INITIAL_CURSOR_VALUE = Sequence.INITIAL_VALUE;
     protected byte
         p10, p11, p12, p13, p14, p15, p16, p17,
@@ -338,21 +309,6 @@ public final class RingBuffer<E> extends RingBufferFields<E> implements Cursored
     }
 
     /**
-     * Resets the cursor to a specific value.  This can be applied at any time, but it is worth noting
-     * that it can cause a data race and should only be used in controlled circumstances.  E.g. during
-     * initialisation.
-     *
-     * @param sequence The sequence to reset too.
-     * @throws IllegalStateException If any gating sequences have already been specified.
-     */
-    @Deprecated
-    public void resetTo(final long sequence)
-    {
-        sequencer.claim(sequence);
-        sequencer.publish(sequence);
-    }
-
-    /**
      * Sets the cursor to a specific sequence and returns the preallocated entry that is stored there.  This
      * can cause a data race and should only be done in controlled circumstances, e.g. during initialisation.
      *
@@ -469,6 +425,7 @@ public final class RingBuffer<E> extends RingBufferFields<E> implements Cursored
      *
      * @return size of buffer
      */
+    @Override
     public int getBufferSize()
     {
         return bufferSize;
@@ -484,6 +441,7 @@ public final class RingBuffer<E> extends RingBufferFields<E> implements Cursored
      * @return <code>true</code> If the specified <code>requiredCapacity</code> is available
      * <code>false</code> if not.
      */
+    @Override
     public boolean hasAvailableCapacity(final int requiredCapacity)
     {
         return sequencer.hasAvailableCapacity(requiredCapacity);
@@ -927,6 +885,7 @@ public final class RingBuffer<E> extends RingBufferFields<E> implements Cursored
      *
      * @return The number of slots remaining.
      */
+    @Override
     public long remainingCapacity()
     {
         return sequencer.remainingCapacity();

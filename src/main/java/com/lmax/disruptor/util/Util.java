@@ -17,11 +17,6 @@ package com.lmax.disruptor.util;
 
 import com.lmax.disruptor.EventProcessor;
 import com.lmax.disruptor.Sequence;
-import sun.misc.Unsafe;
-
-import java.lang.reflect.Field;
-import java.security.AccessController;
-import java.security.PrivilegedExceptionAction;
 
 /**
  * Set of common functions used by the Disruptor.
@@ -92,56 +87,28 @@ public final class Util
         return sequences;
     }
 
-    private static final Unsafe THE_UNSAFE;
-
-    static
-    {
-        try
-        {
-            final PrivilegedExceptionAction<Unsafe> action = () ->
-            {
-                Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
-                theUnsafe.setAccessible(true);
-                return (Unsafe) theUnsafe.get(null);
-            };
-
-            THE_UNSAFE = AccessController.doPrivileged(action);
-        }
-        catch (Exception e)
-        {
-            throw new RuntimeException("Unable to load unsafe", e);
-        }
-    }
-
-    /**
-     * Get a handle on the Unsafe instance, used for accessing low-level concurrency
-     * and memory constructs.
-     *
-     * @return The Unsafe
-     */
-    public static Unsafe getUnsafe()
-    {
-        return THE_UNSAFE;
-    }
-
     /**
      * Calculate the log base 2 of the supplied integer, essentially reports the location
      * of the highest bit.
      *
-     * @param i Value to calculate log2 for.
+     * @param value Positive value to calculate log2 for.
      * @return The log2 value
      */
-    public static int log2(final int i)
+    public static int log2(final int value)
     {
-        long value = i;
-        int r = 0;
-        while ((value >>= 1) != 0)
+        if (value < 1)
         {
-            ++r;
+            throw new IllegalArgumentException("value must be a positive number");
         }
-        return r;
+        return Integer.SIZE - Integer.numberOfLeadingZeros(value) - 1;
     }
 
+    /**
+     * @param mutex The object to wait on
+     * @param timeoutNanos The number of nanoseconds to wait for
+     * @return the number of nanoseconds waited (approximately)
+     * @throws InterruptedException if the underlying call to wait is interrupted
+     */
     public static long awaitNanos(final Object mutex, final long timeoutNanos) throws InterruptedException
     {
         long millis = timeoutNanos / ONE_MILLISECOND_IN_NANOSECONDS;

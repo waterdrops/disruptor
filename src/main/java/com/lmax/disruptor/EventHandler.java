@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 LMAX Ltd.
+ * Copyright 2022 LMAX Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ package com.lmax.disruptor;
  * @param <T> event implementation storing the data for sharing during exchange or parallel coordination of an event.
  * @see BatchEventProcessor#setExceptionHandler(ExceptionHandler) if you want to handle exceptions propagated out of the handler.
  */
-public interface EventHandler<T>
+public interface EventHandler<T> extends EventHandlerBase<T>
 {
     /**
      * Called when a publisher has published an event to the {@link RingBuffer}.  The {@link BatchEventProcessor} will
@@ -36,5 +36,20 @@ public interface EventHandler<T>
      * @param endOfBatch flag to indicate if this is the last event in a batch from the {@link RingBuffer}
      * @throws Exception if the EventHandler would like the exception handled further up the chain.
      */
+    @Override
     void onEvent(T event, long sequence, boolean endOfBatch) throws Exception;
+
+    /**
+     *  Used by the {@link BatchEventProcessor} to set a callback allowing the {@link EventHandler} to notify
+     *  when it has finished consuming an event if this happens after the {@link EventHandler#onEvent(Object, long, boolean)} call.
+     *
+     *  <p>Typically this would be used when the handler is performing some sort of batching operation such as writing to an IO
+     *  device; after the operation has completed, the implementation should call {@link Sequence#set} to update the
+     *  sequence and allow other processes that are dependent on this handler to progress.
+     *
+     * @param sequenceCallback callback on which to notify the {@link BatchEventProcessor} that the sequence has progressed.
+     */
+    default void setSequenceCallback(Sequence sequenceCallback)
+    {
+    }
 }

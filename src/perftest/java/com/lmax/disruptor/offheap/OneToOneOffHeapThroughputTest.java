@@ -2,7 +2,7 @@ package com.lmax.disruptor.offheap;
 
 import com.lmax.disruptor.AbstractPerfTestDisruptor;
 import com.lmax.disruptor.BatchEventProcessor;
-import com.lmax.disruptor.BatchStartAware;
+import com.lmax.disruptor.BatchEventProcessorBuilder;
 import com.lmax.disruptor.DataProvider;
 import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.PerfTestContext;
@@ -35,7 +35,7 @@ public class OneToOneOffHeapThroughputTest extends AbstractPerfTestDisruptor
         new OffHeapRingBuffer(new SingleProducerSequencer(BUFFER_SIZE, waitStrategy), BLOCK_SIZE);
     private final ByteBufferHandler handler = new ByteBufferHandler();
     private final BatchEventProcessor<ByteBuffer> processor =
-            new BatchEventProcessor<>(buffer, buffer.newBarrier(), handler);
+            new BatchEventProcessorBuilder().build(buffer, buffer.newBarrier(), handler);
 
     {
         buffer.addGatingSequences(processor.getSequence());
@@ -96,7 +96,7 @@ public class OneToOneOffHeapThroughputTest extends AbstractPerfTestDisruptor
         new OneToOneOffHeapThroughputTest().testImplementations();
     }
 
-    public static class ByteBufferHandler implements EventHandler<ByteBuffer>, BatchStartAware
+    public static class ByteBufferHandler implements EventHandler<ByteBuffer>
     {
         private final PaddedLong total = new PaddedLong();
         private final PaddedLong batchesProcessed = new PaddedLong();
@@ -137,7 +137,7 @@ public class OneToOneOffHeapThroughputTest extends AbstractPerfTestDisruptor
         }
 
         @Override
-        public void onBatchStart(final long batchSize)
+        public void onBatchStart(final long batchSize, final long queueDepth)
         {
             batchesProcessed.increment();
         }

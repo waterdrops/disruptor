@@ -4,6 +4,9 @@ on:
   push:
     branches: [ master ]
 
+permissions:
+  contents: write
+
 jobs:
   checkout-and-deploy:
     runs-on: ubuntu-latest
@@ -14,12 +17,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@master
       - name: Set up java
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
           java-version: ${{ matrix.java }}
+          distribution: 'zulu'
       - name: Build ASCIIDoc with Gradle
         run: ./gradlew clean asciidoctor
       - name: Simple deploy with git
-        uses: rdarida/simple-github-pages-deploy-action@v1
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          git-base-folder: build/docs/asciidoc/en/
+          folder: build/docs/asciidoc/en/

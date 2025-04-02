@@ -5,6 +5,12 @@ High Performance Inter-Thread Messaging Library
 :Email:
 :Date: {docdata}
 
+// If you're changing these, also check out asciidoctor.gradle!
+:xrefstyle: short
+:icons: font
+:gradle-rootdir: ../../../../
+:imagesdir: ../../
+
 == Read This First
 
 To understand the problem the Disruptor is trying to solve, and to get a feel for why this concurrency framework is so fast, read the <<disruptor.adoc#,Technical Paper>>.
@@ -47,7 +53,7 @@ It's fast.
 Very fast.
 
 .Latency histogram comparing Disruptor to ArrayBlockingQueue
-image::./resources/images/latency-histogram.png[]
+image::resources/images/latency-histogram.png[]
 
 Note that this is a log-log scale, not linear.
 If we tried to plot the comparisons on a linear scale, we'd run out of space very quickly.
@@ -64,16 +70,16 @@ We have performance results of the test that produced these results, plus others
 
 - https://groups.google.com/g/lmax-disruptor[Disruptor Google Group]
 - <<disruptor.adoc#,Disruptor Paper>>
-- http://martinfowler.com/articles/lmax.html[Martin Fowler's Technical Review]
-- https://github.com/odeheurles/Disruptor-net[.NET Disruptor Port]
-- http://www.lmax.com[LMAX Exchange]
+- https://martinfowler.com/articles/lmax.html[Martin Fowler's Technical Review]
+- https://github.com/disruptor-net/Disruptor-net[.NET Disruptor Port]
+- https://www.lmax.com[LMAX Exchange]
 - https://www.lmax.com/blog/staff-blogs/[LMAX Staff Blogs]
-- http://mechanical-sympathy.blogspot.com[Mechanical Sympathy] (Martin Thompson)
-- http://bad-concurrency.blogspot.com[Bad Concurrency] (Michael Barker)
+- https://mechanical-sympathy.blogspot.com/[Mechanical Sympathy] (Martin Thompson)
+- https://bad-concurrency.blogspot.com/[Bad Concurrency] (Michael Barker)
 
 == Presentations
 
-- http://www.infoq.com/presentations/LMAX[Disruptor presentation @ QCon SF]
+- https://www.infoq.com/presentations/LMAX/[Disruptor presentation @ QCon SF]
 - https://www.slideshare.net/trishagee/introduction-to-the-disruptor[Introduction to the Disruptor]
 
 == Changelog

@@ -1,8 +1,8 @@
 package com.lmax.disruptor.examples;
 
 import com.lmax.disruptor.BatchEventProcessor;
+import com.lmax.disruptor.BatchEventProcessorBuilder;
 import com.lmax.disruptor.EventHandler;
-import com.lmax.disruptor.LifecycleAware;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.examples.support.StubEvent;
@@ -14,7 +14,7 @@ import java.util.concurrent.Executors;
 
 public class DynamicallyAddHandler
 {
-    private static class DynamicHandler implements EventHandler<StubEvent>, LifecycleAware
+    private static class DynamicHandler implements EventHandler<StubEvent>
     {
         private final CountDownLatch shutdownLatch = new CountDownLatch(1);
 
@@ -53,11 +53,11 @@ public class DynamicallyAddHandler
         // Construct 2 batch event processors.
         DynamicHandler handler1 = new DynamicHandler();
         BatchEventProcessor<StubEvent> processor1 =
-                new BatchEventProcessor<>(ringBuffer, ringBuffer.newBarrier(), handler1);
+                new BatchEventProcessorBuilder().build(ringBuffer, ringBuffer.newBarrier(), handler1);
 
         DynamicHandler handler2 = new DynamicHandler();
         BatchEventProcessor<StubEvent> processor2 =
-                new BatchEventProcessor<>(ringBuffer, ringBuffer.newBarrier(processor1.getSequence()), handler2);
+                new BatchEventProcessorBuilder().build(ringBuffer, ringBuffer.newBarrier(processor1.getSequence()), handler2);
 
         // Dynamically add both sequences to the ring buffer
         ringBuffer.addGatingSequences(processor1.getSequence(), processor2.getSequence());
